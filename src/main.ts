@@ -548,7 +548,7 @@ export default class LatexSuitePlugin extends Plugin {
 			let replacement = result.replacement;
 
 
-			// When in inline math, remove any spaces at the end of the replacement
+			// Disabled in this fork. When in inline math, remove any spaces at the end of the replacement. 
 			if (withinMath) {
 				let spaceIndex = 0;
 				if (replacement.endsWith(" ")) {
@@ -567,7 +567,7 @@ export default class LatexSuitePlugin extends Plugin {
 
 					const inlineMath = isWithinInlineEquation(view);
 
-					if (inlineMath) {
+					if (false) {
 						if (spaceIndex === -1) {
 							replacement = replacement.trimEnd();
 						}
