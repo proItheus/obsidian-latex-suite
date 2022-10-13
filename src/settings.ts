@@ -1,14 +1,14 @@
 import { App, PluginSettingTab, Setting, Modal, ButtonComponent, ExtraButtonComponent } from "obsidian";
 import { EditorView, ViewUpdate } from "@codemirror/view";
 import { EditorState, Extension, Prec } from "@codemirror/state";
-import { basicSetup } from "./editor/extensions";
+import { basicSetup } from "./snippets_editor/extensions";
 
 
 import { DEFAULT_SNIPPETS } from "./default_snippets";
 import LatexSuitePlugin from "./main";
-import { concealPlugin } from "./conceal";
-import { colorPairedBracketsPluginLowestPrec, highlightCursorBracketsPlugin } from "./highlight_brackets";
-import { cursorTooltipBaseTheme, cursorTooltipField } from "./inline_math_tooltip";
+import { concealPlugin } from "./editor_extensions/conceal";
+import { colorPairedBracketsPluginLowestPrec, highlightCursorBracketsPlugin } from "./editor_extensions/highlight_brackets";
+import { cursorTooltipBaseTheme, cursorTooltipField } from "./editor_extensions/inline_math_tooltip";
 
 
 export interface LatexSuiteSettings {
@@ -20,6 +20,7 @@ export interface LatexSuiteSettings {
     highlightCursorBracketsEnabled: boolean;
     inlineMathPreviewEnabled: boolean;
     autofractionExcludedEnvs: string,
+    autofractionBreakingChars: string;
     matrixShortcutsEnabled: boolean;
     matrixShortcutsEnvNames: string;
     taboutEnabled: boolean;
@@ -41,6 +42,7 @@ export const DEFAULT_SETTINGS: LatexSuiteSettings = {
         ["^{", "}"],
         ["\\\\pu{", "}"]
 ]`,
+    autofractionBreakingChars: "+-=",
     matrixShortcutsEnabled: true,
     matrixShortcutsEnvNames: "pmatrix, cases, align, bmatrix, Bmatrix, vmatrix, Vmatrix, array, matrix",
     taboutEnabled: true,
@@ -314,6 +316,18 @@ export class LatexSuiteSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
+
+        new Setting(containerEl)
+            .setName("Breaking characters")
+            .setDesc(`A list of characters that denote the start/end of a fraction. e.g. if + is included in the list, "a+b/c" will expand to "a+\\frac{b}{c}". If + is not in the list, it will expand to "\\frac{a+b}{c}".`)
+            .addText(text => text
+                .setPlaceholder(DEFAULT_SETTINGS.autofractionBreakingChars)
+                .setValue(this.plugin.settings.autofractionBreakingChars)
+                .onChange(async (value) => {
+                    this.plugin.settings.autofractionBreakingChars = value;
+
+                    await this.plugin.saveSettings();
+                }));
 
 
         containerEl.createEl('div', {text: "Matrix shortcuts"}).addClasses(["setting-item", "setting-item-heading", "setting-item-name"]);

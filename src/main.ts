@@ -8,9 +8,9 @@ import { isWithinEquation, isWithinInlineEquation, replaceRange, setCursor, isIn
 import { markerStateField, addMark, removeMark, startSnippet, endSnippet, undidStartSnippet, undidEndSnippet } from "./marker_state_field";
 import { Environment, Snippet, SNIPPET_VARIABLES, EXCLUSIONS } from "./snippets"
 import { SnippetManager } from "./snippet_manager";
-import { concealPlugin } from "./conceal";
-import { colorPairedBracketsPluginLowestPrec, highlightCursorBracketsPlugin } from "./highlight_brackets";
-import { cursorTooltipBaseTheme, cursorTooltipField } from "./inline_math_tooltip";
+import { concealPlugin } from "./editor_extensions/conceal";
+import { colorPairedBracketsPluginLowestPrec, highlightCursorBracketsPlugin } from "./editor_extensions/highlight_brackets";
+import { cursorTooltipBaseTheme, cursorTooltipField } from "./editor_extensions/inline_math_tooltip";
 import { editorCommands } from "./editor_commands";
 import { parse } from "json5";
 
@@ -581,7 +581,7 @@ export default class LatexSuitePlugin extends Plugin {
 
 			// Expand the snippet
             const start = triggerPos;
-			this.snippetManager.queueSnippet({from: start, to: to, insert: replacement});
+			this.snippetManager.queueSnippet({from: start, to: to, insert: replacement, keyPressed: key});
 
 
 			const containsTrigger = this.autoEnlargeBracketsTriggers.some(word => replacement.contains("\\" + word));
@@ -679,7 +679,8 @@ export default class LatexSuitePlugin extends Plugin {
 
                     }
 
-					if ([" ", "+", "-", "=", "$", "(", "[", "{", "\n"].contains(curChar)) {
+
+					if (" $([{\n".concat(this.settings.autofractionBreakingChars).contains(curChar)) {
 						start = i+1;
 						break;
 					}
@@ -701,7 +702,7 @@ export default class LatexSuitePlugin extends Plugin {
 
 			const replacement = "\\frac{" + numerator + "}{$0}$1";
 
-			this.snippetManager.queueSnippet({from: start, to: to, insert: replacement});
+			this.snippetManager.queueSnippet({from: start, to: to, insert: replacement, keyPressed: "/"});
 
 			return true;
 	}
