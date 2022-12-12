@@ -1,7 +1,7 @@
 {
 	"name": "obsidian-latex-suite",
-	"version": "1.5.2",
-	"description": "Make typesetting LaTeX math as fast as handwriting",
+	"version": "1.6.8",
+	"description": "Make typesetting LaTeX math as fast as handwriting through snippets, text expansion, and editor enhancements",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
@@ -12,6 +12,7 @@
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
+		"@popperjs/core": "2.11.5",
 		"codemirror": "^6.0.0",
 		"@codemirror/autocomplete": "^6.0.0",
 		"@codemirror/commands": "^6.0.0",

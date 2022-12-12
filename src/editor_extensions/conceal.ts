@@ -4,7 +4,7 @@ import { EditorView, ViewUpdate, Decoration, DecorationSet, WidgetType, ViewPlug
 import { EditorSelection, Range } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
 import { getEquationBounds, findMatchingBracket } from "./../editor_helpers";
-import { cmd_symbols, greek, map_super, map_sub, leftright, brackets, mathbb, mathscrcal, fractions, operators } from "./conceal_maps";
+import { cmd_symbols, greek, map_super, map_sub, brackets, mathbb, mathscrcal, fractions, operators } from "./conceal_maps";
 // import { SNIPPET_VARIABLES } from "./snippets";
 
 
@@ -29,7 +29,7 @@ class ConcealWidget extends WidgetType {
     }
 
     eq(other: ConcealWidget) {
-        return (other.symbol == this.symbol);
+        return ((other.symbol == this.symbol) && (other.elementType === this.elementType));
     }
 
     toDOM() {
@@ -139,7 +139,7 @@ function concealModifier(eqn: string, modifier: string, combiningCharacter: stri
 function concealSupSub(eqn: string, superscript: boolean, symbolMap: {[key: string]:string}):Concealment[] {
 
     const prefix = superscript ? "\\^" : "_";
-    const regexStr = prefix + "{([A-Za-z0-9\\()/+-=<>:;]+)}";
+    const regexStr = prefix + "{([A-Za-z0-9\\()\\[\\]/+-=<>':;\\\\ *]+)}";
     const regex = new RegExp(regexStr, "g");
 
     const matches = [...eqn.matchAll(regex)];
@@ -150,8 +150,18 @@ function concealSupSub(eqn: string, superscript: boolean, symbolMap: {[key: stri
     for (const match of matches) {
 
         const exponent = match[1];
-        const replacement = exponent;
         const elementType = superscript ? "sup" : "sub";
+
+
+        // Conceal super/subscript symbols as well
+        const symbolNames = Object.keys(symbolMap);
+
+        const symbolRegexStr = "\\\\(" + escapeRegex(symbolNames.join("|")) + ")";
+        const symbolRegex = new RegExp(symbolRegexStr, "g");
+
+        const replacement = exponent.replace(symbolRegex, (a, b) => {
+            return symbolMap[b];
+        });
 
 
         concealments.push({start: match.index, end: match.index + match[0].length, replacement: replacement, class: "cm-number", elementType: elementType});
@@ -165,7 +175,7 @@ function concealSupSub(eqn: string, superscript: boolean, symbolMap: {[key: stri
 
 function concealBoldMathBbMathRm(eqn: string, symbolMap: {[key: string]:string}):Concealment[] {
 
-    const regexStr = "\\\\(mathbf|mathbb|mathrm){([A-Za-z0-9]+)}";
+    const regexStr = "\\\\(mathbf|boldsymbol|mathbb|mathrm){([A-Za-z0-9]+)}";
     const regex = new RegExp(regexStr, "g");
 
     const matches = [...eqn.matchAll(regex)];
@@ -179,7 +189,7 @@ function concealBoldMathBbMathRm(eqn: string, symbolMap: {[key: string]:string})
         const start = match.index;
         const end = start + match[0].length;
 
-        if (type === "mathbf") {
+        if (type === "mathbf" || type === "boldsymbol") {
             concealments.push({start: start, end: end, replacement: value, class: "cm-concealed-bold cm-variable-1"});
         }
         else if (type === "mathbb") {
@@ -195,6 +205,31 @@ function concealBoldMathBbMathRm(eqn: string, symbolMap: {[key: string]:string})
 
     return concealments;
 }
+
+
+
+function concealText(eqn: string):Concealment[] {
+
+    const regexStr = "\\\\text{([A-Za-z0-9-.!?() ]+)}";
+    const regex = new RegExp(regexStr, "g");
+
+    const matches = [...eqn.matchAll(regex)];
+
+    const concealments:Concealment[] = [];
+
+    for (const match of matches) {
+        const value = match[1];
+
+        const start = match.index;
+        const end = start + match[0].length;
+
+        concealments.push({start: start, end: end, replacement: value, class: "cm-concealed-mathrm cm-variable-2"});
+
+    }
+
+    return concealments;
+}
+
 
 
 function concealOperators(eqn: string, symbols: string[]):Concealment[] {
@@ -350,20 +385,24 @@ function conceal(view: EditorView) {
             const eqn = view.state.doc.sliceString(bounds.start, bounds.end);
 
 
+            const ALL_SYMBOLS = {...greek, ...cmd_symbols};
+
             const concealments = [
-                ...concealSupSub(eqn, true, map_super),
-                ...concealSupSub(eqn, false, map_sub),
                 ...concealSymbols(eqn, "\\^", "", map_super),
                 ...concealSymbols(eqn, "_", "", map_sub),
                 ...concealSymbols(eqn, "\\\\frac", "", fractions),
-                ...concealSymbols(eqn, "\\\\", "", {...leftright, ...greek, ...cmd_symbols}),
+                ...concealSymbols(eqn, "\\\\", "", ALL_SYMBOLS),
+                ...concealSupSub(eqn, true, ALL_SYMBOLS),
+                ...concealSupSub(eqn, false, ALL_SYMBOLS),
                 ...concealModifier(eqn, "hat", "\u0302"),
                 ...concealModifier(eqn, "dot", "\u0307"),
                 ...concealModifier(eqn, "ddot", "\u0308"),
                 ...concealModifier(eqn, "overline", "\u0304"),
+                ...concealModifier(eqn, "bar", "\u0304"),
                 ...concealSymbols(eqn, "\\\\", "", brackets, "cm-bracket"),
                 ...concealAtoZ(eqn, "\\\\mathcal{", "}", mathscrcal),
                 ...concealBoldMathBbMathRm(eqn, mathbb),
+                ...concealText(eqn),
                 ...concealBraKet(eqn, selection, bounds.start),
                 ...concealFraction(eqn, selection, bounds.start),
                 ...concealOperators(eqn, operators)

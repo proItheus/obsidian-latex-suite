@@ -1,6 +1,6 @@
 import { EditorView, Decoration } from "@codemirror/view";
 import { Range, SelectionRange, EditorSelection, ChangeSpec, ChangeSet } from "@codemirror/state";
-import { setCursor, setSelections, findMatchingBracket, resetCursorBlink } from "./editor_helpers";
+import { setCursor, setSelections, findMatchingBracket, resetCursorBlink } from "./../editor_helpers";
 import { addMark, clearMarks, markerStateField, removeMarkBySpecAttribute, startSnippet, endSnippet } from "./marker_state_field";
 import { isolateHistory } from "@codemirror/commands";
 
@@ -179,7 +179,8 @@ export class SnippetManager {
                 // Use prevChar so that cursors are placed at the end of the added text
                 const prevChar = view.state.doc.sliceString(snippet.to-1, snippet.to);
 
-                keyPresses.push({from: snippet.to-1, to: snippet.to, insert: prevChar + snippet.keyPressed});
+                const from = snippet.to === 0 ? 0 : snippet.to-1;
+                keyPresses.push({from: from, to: snippet.to, insert: prevChar + snippet.keyPressed});
             }
         }
 
@@ -207,7 +208,7 @@ export class SnippetManager {
 
         // Insert any tabstops
         // Find the positions of the cursors in the new document
-        const changeSet = ChangeSet.of(changes, view.state.doc.length);
+        const changeSet = ChangeSet.of(changes, docLength);
         const oldPositions = snippets.map(change => change.from);
         const newPositions = oldPositions.map(pos => changeSet.mapPos(pos));
 

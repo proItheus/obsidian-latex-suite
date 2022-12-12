@@ -82,6 +82,9 @@ export const cmd_symbols:{[name:string]: string} =
     "Leftrightarrow": "⇔",
     "lhd": "◁",
     "rhd": "▷",
+    "leftarrow": "←",
+    "Leftarrow": "⇐",
+    "left": "",
     "leq": "≤",
     "le": "≤",
     "ll": "≪",
@@ -120,12 +123,11 @@ export const cmd_symbols:{[name:string]: string} =
     "propto": "∝",
     "rceil": "⌉",
     "Re": "ℜ",
+    "right": "",
     "qquad": " ",
     "quad": " ",
     "rightarrow": "→",
     "Rightarrow": "⇒",
-    "leftarrow": "←",
-    "Leftarrow": "⇐",
     "rightleftharpoons": "⇌",
     "rmoustache": "╮",
     "S": "§",
@@ -142,6 +144,7 @@ export const cmd_symbols:{[name:string]: string} =
     "sqsubset": "⊏",
     "sqsupseteq": "⊒",
     "sqsupset": "⊐",
+    "square": "□", // ▢◻
     "star": "✫",
     "subseteq": "⊆",
     "subset": "⊂",
@@ -217,6 +220,7 @@ export const operators:string[] =
     "liminf",
     "min",
     "max",
+    "inf"
     ];
 
 
@@ -494,14 +498,10 @@ export const brackets = {
     "left<": "〈",
     "right>": "〉",
     "langle": "〈",
-    "rangle": "〉"
-}
-
-
-
-export const leftright = {
-    "left": "",
-    "right": "",
+    "rangle": "〉",
+    "lvert": "|",
+    "rvert": "|",
+    "vert": "|"
 }
 
 

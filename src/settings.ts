@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting, Modal, ButtonComponent, ExtraButtonComponent } from "obsidian";
 import { EditorView, ViewUpdate } from "@codemirror/view";
-import { EditorState, Extension, Prec } from "@codemirror/state";
+import { EditorState, Extension } from "@codemirror/state";
 import { basicSetup } from "./snippets_editor/extensions";
 
 
@@ -9,11 +9,15 @@ import LatexSuitePlugin from "./main";
 import { concealPlugin } from "./editor_extensions/conceal";
 import { colorPairedBracketsPluginLowestPrec, highlightCursorBracketsPlugin } from "./editor_extensions/highlight_brackets";
 import { cursorTooltipBaseTheme, cursorTooltipField } from "./editor_extensions/inline_math_tooltip";
+import { FileSuggest } from "./ui/file_suggest";
+import { debouncedSetSnippetsFromFileOrFolder } from "./snippets/snippet_helper_functions";
 
 
 export interface LatexSuiteSettings {
-	snippets: string;
+    snippets: string;
     snippetsEnabled: boolean;
+    loadSnippetsFromFile: boolean;
+    snippetsFileLocation: string;
     autofractionEnabled: boolean;
     concealEnabled: boolean,
     colorPairedBracketsEnabled: boolean;
@@ -32,6 +36,8 @@ export interface LatexSuiteSettings {
 export const DEFAULT_SETTINGS: LatexSuiteSettings = {
     snippets: DEFAULT_SNIPPETS,
     snippetsEnabled: true,
+    loadSnippetsFromFile: false,
+    snippetsFileLocation: "",
     concealEnabled: false,
     colorPairedBracketsEnabled: true,
     highlightCursorBracketsEnabled: true,
@@ -188,6 +194,64 @@ export class LatexSuiteSettingTab extends PluginSettingTab {
                 },
             ).open();
         });
+
+
+
+        let snippetsFileLocEl:HTMLElement;
+
+        new Setting(containerEl)
+        .setName("Load snippets from file or folder")
+        .setDesc("Whether to load snippets from a specified file, or from all files within a folder (instead of from the plugin settings).")
+        .addToggle(toggle => toggle
+            .setValue(this.plugin.settings.loadSnippetsFromFile)
+            .onChange(async (value) => {
+                this.plugin.settings.loadSnippetsFromFile = value;
+
+                snippetsSetting.settingEl.toggleClass("hidden", value);
+                snippetsFileLocEl.toggleClass("hidden", !value);
+
+                if (value) {
+                    debouncedSetSnippetsFromFileOrFolder(this.plugin);
+                }
+                else {
+                    this.plugin.setSnippets(this.plugin.settings.snippets);
+                }
+
+                await this.plugin.saveSettings();
+            }));
+
+
+        const snippetsFileLoc = new Setting(containerEl)
+        .setName("Snippets file or folder location")
+        .setDesc("The file or folder to load snippets from.");
+
+
+        let inputEl;
+        snippetsFileLoc.addText(text => {
+                text
+                .setPlaceholder(DEFAULT_SETTINGS.snippetsFileLocation)
+                .setValue(this.plugin.settings.snippetsFileLocation)
+                .onChange(async (value) => {
+                    this.plugin.settings.snippetsFileLocation = value;
+
+                    debouncedSetSnippetsFromFileOrFolder(this.plugin);
+
+                    await this.plugin.saveSettings();
+                });
+
+                inputEl = text.inputEl;
+            }
+        );
+
+        snippetsFileLocEl = snippetsFileLoc.settingEl;
+        new FileSuggest(this.app, inputEl);
+        
+
+        // Hide settings that are not relevant when "loadSnippetsFromFile" is set to true/false
+        const loadSnippetsFromFile = this.plugin.settings.loadSnippetsFromFile;
+        snippetsSetting.settingEl.toggleClass("hidden", loadSnippetsFromFile);
+        snippetsFileLocEl.toggleClass("hidden", !loadSnippetsFromFile);
+
 
 
         containerEl.createEl('div', {text: "Conceal"}).addClasses(["setting-item", "setting-item-heading", "setting-item-name"]);

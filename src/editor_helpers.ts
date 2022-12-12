@@ -1,5 +1,5 @@
 import { Platform } from "obsidian";
-import { Environment } from "./snippets";
+import { Environment } from "./snippets/snippets";
 import { EditorView } from "@codemirror/view";
 import { EditorSelection, SelectionRange, EditorState } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
@@ -292,7 +292,7 @@ export function getOpenBracket(closeBracket: string) {
 
 
 export function getCloseBracket(openBracket: string) {
-    const closeBrackets:{[openBracket: string]: string} = {"(": ")", "[": "]", "{": "}", "\\{": "\\}"};
+    const closeBrackets:{[openBracket: string]: string} = {"(": ")", "[": "]", "{": "}"};
 
     return closeBrackets[openBracket];
 }
