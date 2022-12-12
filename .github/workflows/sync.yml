@@ -14,3 +14,5 @@ jobs:
       - uses: tgymnich/fork-sync@latest
         with:
           pr-message: "Auto sync fork from original repo"
+          base: main
+          head: main
